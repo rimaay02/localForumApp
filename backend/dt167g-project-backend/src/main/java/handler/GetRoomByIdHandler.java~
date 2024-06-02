@@ -1,0 +1,31 @@
+package handler;
+
+import com.sun.net.httpserver.HttpExchange;
+import com.sun.net.httpserver.HttpHandler;
+import controller.ForumController;
+import util.HttpUtils;
+
+import java.io.IOException;
+import java.net.URI;
+import java.sql.SQLException;
+
+public class GetRoomByIdHandler implements HttpHandler {
+    private final ForumController forumController;
+
+    public GetRoomByIdHandler(ForumController forumController) {
+        this.forumController = forumController;
+    }
+
+    @Override
+    public void handle(HttpExchange exchange) throws IOException {
+        // Extract room ID from the request path
+        URI requestURI = exchange.getRequestURI();
+        String[] pathParts = requestURI.getPath().split("/");
+        String roomId = pathParts[pathParts.length - 1]; // Get the last part of the path which is the room ID
+        try {
+            forumController.getRoomById(exchange);
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+    }
+}
