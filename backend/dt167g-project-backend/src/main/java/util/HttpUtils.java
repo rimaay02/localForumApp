@@ -81,8 +81,9 @@ public class HttpUtils {
         String origin = "http://localhost:4200";;
         exchange.getResponseHeaders().add("Access-Control-Allow-Origin", origin);
         exchange.getResponseHeaders().add("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
-        exchange.getResponseHeaders().add("Access-Control-Allow-Headers", "Content-Type, Authorization");
+        exchange.getResponseHeaders().add("Access-Control-Allow-Headers", "Content-Type, Authorization, X-CSRF-Token");
         exchange.getResponseHeaders().add("Access-Control-Allow-Credentials", "true");
+        exchange.getResponseHeaders().add("Access-Control-Expose-Headers", "Content-Type, X-CSRF-Token");
         logger.info("CORS headers added successfully");
     }
 

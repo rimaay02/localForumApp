@@ -15,17 +15,31 @@ public class SessionHandler {
 
     public static void createSession(HttpExchange exchange, String username) {
         String sessionId = UUID.randomUUID().toString();
-        String csrfToken = UUID.randomUUID().toString();
+        String csrfToken = "_csrf_" + UUID.randomUUID().toString();
+        CsrfTokenUtil.setCsrfTokenInSession(csrfToken);
         Map<String, Object> userData = new HashMap<>();
         userData.put("username", username);
         userData.put("csrfToken", csrfToken);
         sessionStore.put(sessionId, userData);
-
+        logger.info("token: " + csrfToken);
         // Set Secure and SameSite attributes
         String cookieValue = "sessionId=" + sessionId + "; HttpOnly; Path=/; Secure; SameSite=None";
         exchange.getResponseHeaders().add("Set-Cookie", cookieValue);
 
         logger.info("Session created for user: " + username + " with sessionId: " + sessionId);
+
+        exchange.getResponseHeaders().add("X-CSRF-Token", csrfToken);
+        logger.info(csrfToken + "is added to respose header");
+    }
+
+
+    public static boolean verifyCsrfToken(HttpExchange exchange) {
+        String requestCsrfToken = exchange.getRequestHeaders().getFirst("X-CSRF-Token");
+        boolean isValid = false;
+        if(requestCsrfToken.equals(CsrfTokenUtil.getCsrfTokenFromSession())){
+             isValid = true;
+        }
+        return isValid;
     }
 
     public static void invalidateSession(HttpExchange exchange) {
@@ -62,7 +76,8 @@ public class SessionHandler {
     }
 
     private static String getSessionId(HttpExchange exchange) {
-        String cookieHeader = exchange.getRequestHeaders().getFirst("Cookie");
+        String cookieHeader = exchange.getResponseHeaders().getFirst("Cookie");
+        logger.info("headers: " + cookieHeader);
         if (cookieHeader != null) {
             for (String cookie : cookieHeader.split(";")) {
                 String[] parts = cookie.trim().split("=");

@@ -1,7 +1,9 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient,HttpHeaders } from '@angular/common/http';
 import { BehaviorSubject, Observable, firstValueFrom, throwError } from 'rxjs';
 import { catchError, tap } from 'rxjs/operators';
+import { CsrfTokenService } from './csrf-token.service';
+
 
 @Injectable({
     providedIn: 'root'
@@ -11,7 +13,7 @@ export class ForumService {
    private roomDataSubject = new BehaviorSubject<any>(null);
    roomData$ = this.roomDataSubject.asObservable();
 
-    constructor(private http: HttpClient,
+    constructor(private http: HttpClient,private csrfTokenService: CsrfTokenService
     ) {
       this.ensureApiUrlIsSet();
      }
@@ -32,7 +34,17 @@ export class ForumService {
   }
 
   async createRoom(newRoom: any): Promise<any> {
-    return await firstValueFrom(this.http.post<any>(`${this.API_URL}/createTopic`, newRoom));
+    let csrfToken = this.csrfTokenService.getCsrfToken();
+
+    if (!csrfToken) {
+      csrfToken = ''; // Provide a default empty string if token is null
+  }
+    const headers = new HttpHeaders({
+      'Content-Type': 'application/json',
+      'X-CSRF-Token': csrfToken
+  });
+  
+    return await firstValueFrom(this.http.post<any>(`${this.API_URL}/createTopic`, newRoom, {headers}));
   }
 
     async getRoomById(roomId: number): Promise<any> {
@@ -42,7 +54,17 @@ export class ForumService {
     }
   
     async postAnswer(newAnswer: any): Promise<any> {
-      const response = await firstValueFrom(this.http.post<any>(`${this.API_URL}/postAnswer`, newAnswer));
+      let csrfToken = this.csrfTokenService.getCsrfToken();
+
+      if (!csrfToken) {
+        csrfToken = ''; // Provide a default empty string if token is null
+    }
+      const headers = new HttpHeaders({
+        'Content-Type': 'application/json',
+        'X-CSRF-Token': csrfToken
+    });
+        
+      const response = await firstValueFrom(this.http.post<any>(`${this.API_URL}/postAnswer`, newAnswer, {headers}));
       console.log("response: " + response)
       const currentRoomData = this.roomDataSubject.value;
     

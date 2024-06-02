@@ -16,6 +16,7 @@ public class DeleteAnswerHandler implements HttpHandler {
 
     @Override
     public void handle(HttpExchange exchange) throws IOException {
+
         if ("DELETE".equalsIgnoreCase(exchange.getRequestMethod())) {
             forumController.deleteAnswer(exchange);
         } else {

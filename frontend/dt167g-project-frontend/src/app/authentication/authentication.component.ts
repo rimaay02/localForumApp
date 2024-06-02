@@ -150,6 +150,8 @@ export class AuthenticationComponent implements OnInit {
     const credentials = { username: sanitizedUsername, password: sanitizedPassword };
     console.log('Attempting login with credentials:', credentials);
 
+
+  
     if (this.rateLimitingService.loginFailed(credentials.username)) {
       this.messageService.showMessage('Too many login attempts. Please try again later.', false);
       return;

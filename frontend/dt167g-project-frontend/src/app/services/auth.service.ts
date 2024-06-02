@@ -3,6 +3,8 @@ import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable, firstValueFrom } from 'rxjs';
 import { MessageService } from '../services/message.service';
 import { Router } from '@angular/router';
+import { HttpResponse } from '@angular/common/http';
+import { CsrfTokenService } from './csrf-token.service';
 
 
 @Injectable({
@@ -31,10 +33,13 @@ export class AuthService {
   constructor(
     private http: HttpClient, 
     private router: Router,
-    private messageService: MessageService  ) {
+    private messageService: MessageService,
+    private csrfTokenService: CsrfTokenService  ) {
     this.ensureApiUrlIsSet();
     this.updateSessionData();
   }
+
+ 
   private async ensureApiUrlIsSet(): Promise<void> {
     if (!this.API_URL) {
       try {
@@ -74,10 +79,40 @@ export class AuthService {
    */
   async loginUser(credentials: any): Promise<any> {
     console.log('Attempting login with credentials:', credentials);
-    const response = await firstValueFrom(this.http.post<any>(`${this.API_URL}/login`, credentials, { withCredentials: true }));
-    console.log('Login response:', response);
-    this.updateSessionState(response.isLoggedIn, response.username, response.userId, response.sessionTimeout);
-    return response;
+    try {
+      const response: HttpResponse<any> = await firstValueFrom(this.http.post<any>(
+        `${this.API_URL}/login`, 
+        credentials, 
+        { 
+          withCredentials: true,
+          observe: 'response' // Ensure that full response is observed
+        }
+      ));
+
+      const csrfToken = response.headers.get('X-CSRF-Token');
+      console.log(response)
+
+      if (csrfToken) {
+        console.log('X-CSRF-Token:', csrfToken);
+        // Store the CSRF token for future use
+        this.csrfTokenService.setCsrfToken(csrfToken);
+      } else {
+        console.log('X-CSRF-Token not found in response headers.');
+      }
+
+      const responseData = response.body;
+      this.updateSessionState(
+        responseData.isLoggedIn, 
+        responseData.username, 
+        responseData.userId, 
+        responseData.sessionTimeout
+      );
+      
+      return response; // Return the full response
+    } catch (error) {
+      console.error('Error during login:', error);
+      throw error;
+    }
   }
    
 

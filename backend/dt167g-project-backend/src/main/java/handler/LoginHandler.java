@@ -25,6 +25,7 @@ public class LoginHandler implements HttpHandler {
 
     @Override
     public void handle(HttpExchange exchange) throws IOException {
+
         if (exchange.getRequestMethod().equalsIgnoreCase("POST")) {
             Map<String, String> params = HttpUtils.getPostParameters(exchange);
             String username = params.get("username");
